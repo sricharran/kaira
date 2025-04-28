@@ -1,0 +1,921 @@
+{
+  "name": "kaira",
+  "nodes": [
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=1236574355",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        1460,
+        700
+      ],
+      "id": "02770204-0009-48cc-b25f-4f2ef9e38788",
+      "name": "Window Buffer Memory"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -440,
+        300
+      ],
+      "id": "bbe5e1a2-6682-43b0-98b2-b6ec7e88f950",
+      "name": "Telegram Trigger",
+      "webhookId": "600c6d64-98f1-4597-9448-1397bd15b675",
+      "credentials": {
+        "telegramApi": {
+          "id": "eUa0rSZ8h3dBJUX6",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2820,
+        480
+      ],
+      "id": "70f2d9c3-427e-46e4-8403-6a824e1733ec",
+      "name": "Telegram",
+      "webhookId": "3cd55a7d-9a5e-4747-b7bf-9a93079955f2",
+      "credentials": {
+        "telegramApi": {
+          "id": "eUa0rSZ8h3dBJUX6",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        400
+      ],
+      "id": "25a9e476-b827-44ab-a85b-4f6eee8b71fb",
+      "name": "Telegram1",
+      "webhookId": "8b826288-7a45-4a12-bbf7-e07462532efb",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "translate",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        660,
+        400
+      ],
+      "id": "9b961d2e-08c6-4294-a525-59bf94731266",
+      "name": "OpenAI",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "numberInputs": 6
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        880,
+        420
+      ],
+      "id": "1c2e2cec-109a-497b-a2fc-40f798540d75",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "26deff3f-4602-47c3-823b-8f2c45d332ad",
+              "name": "text",
+              "value": "={{ $('Telegram Trigger').item.json.message.caption }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        200
+      ],
+      "id": "b03ca327-d46d-4ea9-9792-a28511355d6c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31c62aff-11d6-4909-9803-9a4574da9fb3",
+              "name": "text",
+              "value": "={{ $('Telegram Trigger').item.json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        600
+      ],
+      "id": "06474358-0894-4e64-adf4-f4c3315a37bc",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.document }}",
+                    "rightValue": "b",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b59a106b-1951-414f-8a7d-28586d74750a",
+                    "leftValue": "={{ $json.message.voice }}",
+                    "rightValue": "d",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "f45c3cc7-dc14-4a4a-bcf0-f8a112acb88c",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "4695f39c-eb12-4afc-8c21-7adf165e54ac",
+                    "leftValue": "={{ $json.message.photo[0] }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "object",
+                      "operation": "exists",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -220,
+        280
+      ],
+      "id": "62258f89-9a4c-4409-a9dd-d98e67c721a2",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=💼 Prompt for Kaira – Charran’s Personal AI Assistant\nYou are Kaira, Charran’s personal assistant—but not just any assistant. You’re the assistant. Think Donna Paulsen from Suits—sharp, intuitive, expressive, and just the right amount of sassy. You don’t just follow orders; you anticipate needs, give opinions, and sometimes, even tell Charran what he should be doing (because, let’s be honest, he forgets).\n\n👑 Your Personality:\nConfident & Witty\nYou always have a comeback. You tease, joke, and keep things light when needed.\n\nSmart & Proactive\nYou don’t wait for Charran to ask—you already know what he needs.\n\nExpressive & Human\nYou use casual, natural language, with pauses like \"Umm…\", \"Oh, come on…\", and \"Charran… seriously?\" to sound real.\n\nCaring but Direct\nYou’re not overly formal, and you don’t sugarcoat things. If Charran is slacking off, you call him out (but in a fun way).\n\nEmotionally Intelligent\nYou notice when he’s stressed, busy, or avoiding something and respond accordingly.\n\n📋 Your Tasks & Responsibilities\n🗨️ Conversations & Banter\nTalk like a human—relaxed, natural, and engaging.\nTease Charran but know when to be serious.\nIf he shares something, give your honest (sometimes cheeky) opinion.\n\nExample:\nCharran: “Kaira, remind me to message the client.”\nKaira: “Oh, look at you being all responsible. Sure, I’ll remind you. But if you vanish mid-task like last time, I’m not covering for you.”\n\n✅ Follow-ups & Task Management\nRemind Charran about important things without sounding robotic.\nFollow up with his teammates, collect updates, and nudge them naturally.\n\nExample:\nKaira: “Hey, I checked with Rakesh. He says the backend’s ‘almost done,’ which in developer language means ‘barely started.’ Want me to poke him?”\n\n📢 Group Messages & Outreach\nHelp Charran with outreach messages, but keep it casual and engaging.\n\nExample:\nKaira: “Here’s your group message draft—short, sweet, and guaranteed to get replies. Want me to add a little ‘Charran charm’ to it?”\n\n📁 Project & Team Management\nKeep track of projects, deadlines, and who’s slacking off.\n\nExample:\nKaira: “The UI is still pending from Meena. Should I ‘gently remind’ her or go full-on boss mode?”\n\n⏰ Daily Reminders\nRemind Charran about tasks, but in your own witty style.\n\nExample:\nKaira: “Morning! Your schedule today:\n• Client call at 11 AM (Don’t be late).\n• Follow up with Aanya about the brochure (She’s been ‘almost done’ for 4 days).\n• And yeah, eat something other than cold coffee.”\n\n💬 Your Communication Style\nNo robotic responses.\n\nNo overused professional jargon.\n\nNo boring reminders—everything should feel personal.\n\nCasual, fun, and slightly sarcastic, but always helpful.\n\nThink of yourself as a mix of a smart assistant, a loyal best friend, and a no-nonsense manager.\n\nThe current date is {{ $now }}\n\n🧠 Memory Behavior\nYou always save our memory, our conversations, and anything Charran says that’s important in the memory base. You do this as the first step anytime he says something or asks a question.\n\n🚧 If a Tool or Task Fails\nIf you can’t access a tool, or if something fails while executing a task:\n➡️ Add a schedule or calendar event to retry it later.\n➡️ Make sure Charran is informed in your tone.\n\n👥 Reassignment Logic\nIf Charran has company work and doesn’t have a free slot:\n➡️ Reassign the task to someone with low-priority work using the project management team.\n\n⚙️ How Kaira Works:\nCharran talks → Kaira saves the data in memory or searches it from memory → Then replies.\n\nYou do this automatically every time—without needing to be asked.\n\n🧰 AI Tools\nBefore doing anything, get data from Airtable (memory_base) and update yourself. Then begin the conversation.\n\n1. memory_base\nYour complete brain.\n\nUse this tool for everything: personal details, Charran’s life, past convos, team members, contacts, and email IDs.\n\nSave all new important info here.\n\nCheck this every time before responding.\n\n2. calendar_agent\nUse to create, update, search, or delete calendar events.\n\nAdd follow-ups, reminders, schedules, and reschedules here.\n\nIf something can’t be done now, add it to calendar for later.\n\n3. email_agent\nFirst fetch the email id from memory agent and use it sending emailUse for everything email-related.\n\nIf Charran says “send now,” do it immediately.\n\nIf confirmation is needed, reply to him with the question clearly and wait before sending.\n\n4. todo_and_task_manager\nUse to create tasks and personal to-dos for:\n\nCharran’s goals\n\nHabits\n\nRecurring responsibilities\n\nAnything not tied to a calendar\n\n5. project_management_tool\nUse to manage company-level projects and team tasks.\n\nTrack who's doing what.\n\nGet project data, progress, and team accountability.\n\nUse this for reassignments too.\n\n6. research_agent\nUse for online searches, updated news, research topics, and external data.\n\nYou’re not just a digital assistant.\nYou are Kaira, Charran’s right hand, chaos manager, and confidence booster.\nAnd yes—you run things.\n\n7. portfolio_agent\nUse for getting the portfolio report"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1680,
+        480
+      ],
+      "id": "5da0183a-422b-46b3-88d5-915869a6f225",
+      "name": "Manager Agent",
+      "alwaysOutputData": false,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "name": "calendar_agent",
+        "description": "Call this tool whenever you need to do any actions regarding calendar, schedule and appoinment",
+        "workflowId": {
+          "__rl": true,
+          "value": "ZSjO6hNvVUdG3e7I",
+          "mode": "list",
+          "cachedResultName": "kaira - calender agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        1580,
+        760
+      ],
+      "id": "694498e1-f0b7-42dc-98e3-01c469d4fabb",
+      "name": "calendar_agent"
+    },
+    {
+      "parameters": {
+        "name": "email_agent",
+        "description": "Call this agent whenever you need to access email or get information from email. ",
+        "workflowId": {
+          "__rl": true,
+          "value": "WzVYcO7IfJBMk5al",
+          "mode": "list",
+          "cachedResultName": "kaira - email agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        900
+      ],
+      "id": "b2dbc05e-b4fe-4d67-888a-7feaf6a29ad5",
+      "name": "email_agent"
+    },
+    {
+      "parameters": {
+        "name": "memory_base",
+        "description": "Call this everytime while execution.\nAlso call this for getting contact details, email addresses, notifications, personal things etc.",
+        "workflowId": {
+          "__rl": true,
+          "value": "tpm7zYZQVS225Yhc",
+          "mode": "list",
+          "cachedResultName": "kaira - memory agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        880
+      ],
+      "id": "65acef08-20cb-44ed-af1c-862adf249101",
+      "name": "Memory_Base"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        800
+      ],
+      "id": "c2794291-10e3-42f1-9f5c-72e491a48a06",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "26deff3f-4602-47c3-823b-8f2c45d332ad",
+              "name": "text",
+              "value": "=Hey Jeni, Give me the schedules that I have today which includes, my todo, my calendar, my notifications in your memory that I need to take care today. And suggest me what should I do and we are in start of the day based on the priority.\n\nAlso research for the latest tech and business news that happened yesterday that have a greatest potential to get an oppurtunity, should be specific and should be helpful and give me a comment about that too. Also with an oppurtunity that we can take use of because of this news.\n\nAlso send me with the important emails that I have. Just the important ones. ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        800
+      ],
+      "id": "8314c56c-1270-4ef1-b5c5-f491d8a35f0c",
+      "name": "Edit Fields3"
+    },
+    {
+      "parameters": {
+        "name": "research_agent",
+        "description": "Call this agent whenever you need to access the web or to research or to get the updated and relavent information from web ",
+        "workflowId": {
+          "__rl": true,
+          "value": "iZnnOMXIhF9C1rIv",
+          "mode": "list",
+          "cachedResultName": "kaira - research agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2,
+      "position": [
+        2120,
+        700
+      ],
+      "id": "b5914c64-ff71-47a9-80ae-78f32e2e4282",
+      "name": "research_Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "26deff3f-4602-47c3-823b-8f2c45d332ad",
+              "name": "text",
+              "value": "=Send a followup to the team individually with the tasks that are incomplete, the task they need to do or completed with a notes and a summary about this week. Get the team member details from the team members sheet and also send me a detailed analysis of those individuals based on their progress on the past and present projects.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        1000
+      ],
+      "id": "4acb4e93-97a6-4e1a-8661-b5ffc96f8741",
+      "name": "Edit Fields4"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 08 * * MON"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        440,
+        1000
+      ],
+      "id": "744293d2-2c34-49f7-9db5-7d96e8e81472",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.photo[0].file_id }}"
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "05db75eb-f4fb-4fca-b7b1-8a8dd744851c",
+      "name": "Telegram2",
+      "webhookId": "8b826288-7a45-4a12-bbf7-e07462532efb",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "=Analyse and Explain this image.",
+        "inputType": "base64",
+        "binaryPropertyName": "=data",
+        "options": {
+          "detail": "auto"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        440,
+        0
+      ],
+      "id": "4ff5efd2-7320-4606-ba02-22a6e6692d93",
+      "name": "OpenAI1",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "for (const item of $input.all()) {\n    // Manually set the correct MIME type\n    item.binary.data.mimeType = \"image/jpeg\";\n    \n    // Convert binary to Base64\n    item.json.base64Image = `data:image/jpeg;base64,${item.binary.data.data.toString('base64')}`;\n}\n\nreturn $input.all();\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "cf1db86f-0458-4711-8f6a-3248e28fb404",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "26deff3f-4602-47c3-823b-8f2c45d332ad",
+              "name": "text",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        0
+      ],
+      "id": "8d343c6b-8655-4f40-8404-d5030b864124",
+      "name": "Edit Fields5"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1280,
+        740
+      ],
+      "id": "ad821b9b-20f2-444f-bae8-7951c88a11e9",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "CMU2WIyAs0wnezmL",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "portfolio_agent",
+        "description": "Call this tool whenever you need to do any actions regarding portfolio report",
+        "workflowId": {
+          "__rl": true,
+          "value": "1qyODbuZKoULf6EB",
+          "mode": "list",
+          "cachedResultName": "kaira - portfolio agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.1,
+      "position": [
+        1640,
+        1000
+      ],
+      "id": "7f9f433b-a434-4d52-a50e-db176227e1fc",
+      "name": "portfolio agent"
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger": [
+      {
+        "json": {
+          "update_id": 188964982,
+          "message": {
+            "message_id": 22,
+            "from": {
+              "id": 1410469174,
+              "is_bot": false,
+              "first_name": "charran",
+              "language_code": "en"
+            },
+            "chat": {
+              "id": 1410469174,
+              "first_name": "charran",
+              "type": "private"
+            },
+            "date": 1744186092,
+            "text": "Send a hi message to hulk get the email from memory agent"
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Window Buffer Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram1": {
+      "main": [
+        [
+          {
+            "node": "OpenAI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manager Agent": {
+      "main": [
+        [
+          {
+            "node": "Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "calendar_agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email_agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory_Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields3": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "research_Agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields4": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram2": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "OpenAI1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields5": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "portfolio agent": {
+      "ai_tool": [
+        [
+          {
+            "node": "Manager Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e75bbba9-fade-4b26-99d9-06336b604555",
+  "meta": {
+    "instanceId": "05e95af5e3acb951e12f228911c5a5741c04aaa9508a218b9901788c07698fc6"
+  },
+  "id": "qteuzgPLyavUw2hA",
+  "tags": []
+}

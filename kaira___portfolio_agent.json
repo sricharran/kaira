@@ -1,0 +1,502 @@
+{
+  "name": "kaira - portfolio agent",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const [row] = items;\n\nconst total = parseFloat(row.json['Total_investment']);\nconst current = parseFloat(row.json['current_value']);\nconst gainRs = parseFloat(row.json['G/L in ₹']);\nconst gainPercent = parseFloat(row.json['G/L in %']);\n\nif (\n  isNaN(total) ||\n  isNaN(current) ||\n  isNaN(gainRs) ||\n  isNaN(gainPercent)\n) {\n  throw new Error(\"One or more values are missing or not a number.\");\n}\n\nconst status = gainRs >= 0 ? \"📈 Gain\" : \"📉 Loss\";\n\nreturn [\n  {\n    json: {\n      subject: \"📊 Kaira Portfolio Summary – Daily Report\",\n      body: `\nHello Investor,\n\nHere is your daily portfolio performance summary:\n\n💼 Total Investment: ₹${total.toFixed(2)}\n📊 Current Value: ₹${current.toFixed(2)}\n${status}: ₹${gainRs.toFixed(2)} (${gainPercent.toFixed(2)}%)\n\n\n      `\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        360
+      ],
+      "id": "3f5733cf-8e40-496d-b160-766fd1cb34ce",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Input: All rows from holdings sheet\nconst rows = items.map(item => item.json);\n\n// Filter valid rows\nconst valid = rows.filter(r => r[\"Daily Gain/Loss in %\"] !== \"\");\n\n// Convert % to number\nvalid.forEach(r => {\n  r[\"Daily Gain/Loss in %\"] = parseFloat(r[\"Daily Gain/Loss in %\"]);\n  r[\"Daily Gain/Loss in ₹\"] = parseFloat(r[\"Daily Gain/Loss in ₹\"]);\n});\n\n// Calculate total daily gain/loss\nconst totalDailyChangeRs = valid.reduce((sum, r) => sum + (r[\"Daily Gain/Loss in ₹\"] || 0), 0);\nconst totalCurrentValue = valid.reduce((sum, r) => sum + (parseFloat(r[\"Current_value\"]) || 0), 0);\nconst totalDailyChangePct = totalCurrentValue ? (totalDailyChangeRs / totalCurrentValue) * 100 : 0;\n\n// Top and Worst performing stock\nconst topPerformer = valid.reduce((a, b) => a[\"Daily Gain/Loss in %\"] > b[\"Daily Gain/Loss in %\"] ? a : b);\nconst worstPerformer = valid.reduce((a, b) => a[\"Daily Gain/Loss in %\"] < b[\"Daily Gain/Loss in %\"] ? a : b);\n\n// Chart: Daily Gain/Loss Bar\nconst labels = valid.map(r => r.Ticker);\nconst values = valid.map(r => r[\"Daily Gain/Loss in %\"]);\nconst colors = values.map(v => v >= 0 ? '#4caf50' : '#f44336');\n\nconst chartConfig = {\n  type: 'bar',\n  data: {\n    labels: labels,\n    datasets: [{\n      label: 'Daily Gain/Loss (%)',\n      data: values,\n      backgroundColor: colors\n    }]\n  },\n  options: {\n    title: {\n      display: true,\n      text: 'Daily Gain/Loss by Stock'\n    },\n    legend: { display: false },\n    scales: {\n      yAxes: [{\n        ticks: {\n          beginAtZero: true,\n          callback: value => value + '%'\n        }\n      }]\n    }\n  }\n};\n\nconst chartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}`;\n\n// Final output to pass to merge\nreturn [\n  {\n    json: {\n      totalDailyChangeRs: totalDailyChangeRs.toFixed(2),\n      totalDailyChangePct: totalDailyChangePct.toFixed(2),\n      topPerformer: `${topPerformer.Ticker} (${topPerformer[\"Daily Gain/Loss in %\"].toFixed(2)}%)`,\n      worstPerformer: `${worstPerformer.Ticker} (${worstPerformer[\"Daily Gain/Loss in %\"].toFixed(2)}%)`,\n      chartUrl\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        180,
+        180
+      ],
+      "id": "54dc9120-ea60-4a8a-a42e-8e5c2325ea8b",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "sendTo": "sricharran2801@gmail.com",
+        "subject": "={{ $('Code').item.json.subject }}",
+        "message": "=<!DOCTYPE html>\n<html>\n  <body style=\"font-family: Arial, sans-serif; color: #333; line-height: 1.6; max-width: 700px; margin: auto;\">\n    <p>Hello Investor,</p>\n\n    <p>Here is your daily portfolio performance summary:</p>\n\n    <ul style=\"list-style: none; padding: 0;\">\n      <li>💼 <strong>Total Investment:</strong> ₹{{ Math.round($('summary').item.json.Total_investment * 100) / 100 }}</li>\n      <li>📊 <strong>Current Value:</strong> ₹{{ Math.round($('summary').item.json.current_value * 100) / 100 }}</li>\n      <li>📉 <strong>Loss:</strong> ₹{{ Math.round($('summary').item.json['G/L in ₹'] * 100) / 100 }} ({{ Math.round($('summary').item.json['G/L in %'] * 100) / 100 }}%)</li>\n      <li>📊 <strong>Nifty 50 moved:</strong> {{ Math.round($('summary').item.json.chg * 100) / 100 }}%</li>\n    </ul>\n\n    <p><strong>📅 Today's Highlights</strong></p>\n\n    <ul style=\"list-style: none; padding: 0;\">\n      <li>📈 <strong>Daily Change:</strong> ₹ {{ $('Merge1').item.json.totalDailyChangeRs }} ({{ $('Merge1').item.json.totalDailyChangePct }}%)</li>\n      <li>🏆 <strong>Top Performer:</strong> {{ $('Merge1').item.json.topPerformer }}</li>\n      <li>📉 <strong>Worst Performer:</strong> {{ $('Merge1').item.json.worstPerformer }}</li>\n    </ul>\n\n    <p><strong>🧠 Investor Insight:</strong><br>\n    <em style=\"color: #444;\">{{ $json.output }}</em>\n    </p>\n\n    <p><strong>{{ $('Merge1').item.json.output }} </strong></p>\n    <ul style=\"list-style: none; padding: 0;\">\n      {{ $json.output.split('\\n').slice(1).map(h => `<li>– ${h}</li>`).join('') }}\n    </ul>\n\n    <p><strong>📈 Portfolio Trend Over Time:</strong></p>\n    <img src=\"{{ $('Code2').item.json.chartUrlLine }}\" \n         alt=\"Portfolio Value Line Chart\" \n         style=\"max-width: 600px; width: 100%; height: auto; margin-bottom: 30px;\" />\n\n    <p>📉 <strong>Daily Gain/Loss Chart:</strong></p>\n    <p><em>(If not visible, your email client may restrict images. Please view in browser)</em></p>\n    <img src=\"{{ $('Code1').item.json.chartUrl }}\" \n         alt=\"Daily Gain/Loss Chart\" \n         style=\"max-width: 400px; width: 100%; height: auto; margin-top: 10px;\" />\n\n    <p style=\"margin-top: 30px;\">Stay invested,<br>\n    – <strong>Kaira</strong>, your Portfolio Assistant 💡</p>\n  </body>\n</html>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1440,
+        180
+      ],
+      "id": "c4fae271-55a6-459d-8521-e69fea80a731",
+      "name": "Gmail",
+      "webhookId": "3cecc62e-6327-4487-a096-f2521a627441",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UY8czqfsbzv3P8fv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(item => item.json);\n\n// Automatically detect the actual keys for date and value\nconst firstRow = rows[1] || rows[0]; // Skip the header row if needed\nconst keys = Object.keys(firstRow).filter(k => k !== 'row_number');\n\nconst dateKey = keys[0];\nconst valueKey = keys[1];\n\nconst labels = rows.map(row => row[dateKey]);\nconst values = rows.map(row => parseFloat(row[valueKey]));\n\nconst chartConfig = {\n  type: 'line',\n  data: {\n    labels: labels,\n    datasets: [{\n      label: 'Portfolio Value',\n      data: values,\n      borderColor: 'rgba(75, 192, 192, 1)',\n      backgroundColor: 'rgba(75, 192, 192, 0.2)',\n      fill: true,\n      tension: 0.3\n    }]\n  },\n  options: {\n    responsive: true,\n    plugins: {\n      title: {\n        display: true,\n        text: 'Portfolio Trend Over Time'\n      }\n    },\n    scales: {\n      x: {\n        title: {\n          display: true,\n          text: 'Date & Time'\n        }\n      },\n      y: {\n        title: {\n          display: true,\n          text: 'Portfolio Value'\n        }\n      }\n    }\n  }\n};\n\nconst quickChartUrl = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}`;\n\nreturn [{\n  json: {\n    chartUrlLine: quickChartUrl\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "fd7157a5-306c-4bd4-990b-a07a6d291eca",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 4,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        800,
+        180
+      ],
+      "id": "4947ce8c-779f-4949-be24-57cb8d97382a",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os",
+          "mode": "list",
+          "cachedResultName": "ascend_holdings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "holdings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit#gid=0"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -40,
+        180
+      ],
+      "id": "d3805cf7-f126-480a-b924-93056486eb89",
+      "name": "holdings",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aGzdEufRV19wOl3m",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os",
+          "mode": "list",
+          "cachedResultName": "ascend_holdings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 135187333,
+          "mode": "list",
+          "cachedResultName": "summary",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit#gid=135187333"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRange"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        180,
+        360
+      ],
+      "id": "8f19a034-13b9-42ef-a013-a126ff871bcd",
+      "name": "summary",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aGzdEufRV19wOl3m",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os",
+          "mode": "list",
+          "cachedResultName": "ascend_holdings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1795823096,
+          "mode": "list",
+          "cachedResultName": "portfolio_value",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit#gid=1795823096"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRange"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a13b02c4-a7c8-48ef-a4ca-b2f08a63b71d",
+      "name": "portfolio value",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aGzdEufRV19wOl3m",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a financial assistant using SerpAPI.\n\nFetch the **latest 3 unique financial news headlines** specifically related to the **Indian stock market**, as of the current time: {{ $now }} on {{ $today }}.\n\n✅ Strict Requirements:\n- Only include headlines published **today** or **within the last 4 hours**.\n- The headlines **must be distinct** — avoid duplicates or reworded versions of the same story.\n- Headlines should reflect **different angles or topics** (e.g., earnings, market trends, economic updates).\n\n📦 Output Format:\n\n🗞️ Top News Today ({{ $now }}):\n- \"Headline 1\"\n- \"Headline 2\"\n- \"Headline 3\"\n\n❗Important:\n- Only include headlines. No summaries, no links, no publication names.\n- Format everything as plain text — this will be used in an email body.\n- Do NOT add any introductory or closing text.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        160,
+        560
+      ],
+      "id": "dc68bd7d-664e-4cb0-ba72-ae43b2a30fb0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        220,
+        860
+      ],
+      "id": "446f7d57-7979-4ed5-8b1b-13243862826b",
+      "name": "SerpAPI",
+      "credentials": {
+        "serpApi": {
+          "id": "CISyCivtWLxr7tl8",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "meta-llama/llama-3.1-70b-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        40,
+        800
+      ],
+      "id": "b08218ae-a6dc-44d5-9313-586a817f1bb8",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "CMU2WIyAs0wnezmL",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a one-sentence investment insight in the style of Warren Buffett, reflecting on today's top performer {{ $json.topPerformer }} and worst performer {{ $json.worstPerformer }}. Make it sound wise, subtle, and long-term oriented.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        1020,
+        180
+      ],
+      "id": "76746ee8-248b-439f-9a8e-099dfb8f75df",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        420
+      ],
+      "id": "5b581df6-153c-4c3f-8ae9-d919f24b2476",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "CMU2WIyAs0wnezmL",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWolframAlpha",
+      "typeVersion": 1,
+      "position": [
+        400,
+        800
+      ],
+      "id": "9226bf1b-fd19-4c00-80f8-46e04a4672d4",
+      "name": "Wolfram Alpha",
+      "credentials": {
+        "wolframAlphaApi": {
+          "id": "mJy2ghc5qje6dHKr",
+          "name": "WolframAlphaApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -380,
+        360
+      ],
+      "id": "2b721044-5954-4551-b325-80dc8520e3f5",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "holdings": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "summary": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "portfolio value": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wolfram Alpha": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "portfolio value",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "holdings",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "summary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b0076e3d-9598-487a-a1cf-57d0fae57aa8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "05e95af5e3acb951e12f228911c5a5741c04aaa9508a218b9901788c07698fc6"
+  },
+  "id": "1qyODbuZKoULf6EB",
+  "tags": []
+}

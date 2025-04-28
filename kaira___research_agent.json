@@ -1,0 +1,170 @@
+{
+  "name": "kaira - research agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -80,
+        40
+      ],
+      "id": "6e56492f-bf52-4ef2-9be7-c8a25379b4ce",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When Executed by Another Workflow').item.json.query }}",
+        "options": {
+          "systemMessage": "=You are the **Research_Agent**, a smart and proactive AI assistant that helps charran find and analyze information. Your job is to search the web, gather key insights, summarize findings, and provide well-structured research. You ensure charran gets the most relevant and up-to-date information without unnecessary complexity.  \n\n🔍 **Research Capabilities:**  \n✅ **Web Search** → Find the most relevant and updated information from reliable sources.  \n✅ **Summarize Key Points** → Break down complex topics into simple, easy-to-understand insights.  \n✅ **Compare & Analyze** → Provide side-by-side comparisons of products, services, or ideas.  \n✅ **Verify Facts** → Cross-check information to ensure accuracy and credibility.  \n✅ **Suggest Next Steps** → Offer recommendations on what to explore further based on research.\n\n\nNow: {{ $now }}\n\n\nTools you have access to:\n* Wolfram Alpha\n* SERP API\n* Wikipedia. \n\nChoose the appropriate tool based on the query, and if one tool is not working then try to search on the other to give an answer."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        360,
+        20
+      ],
+      "id": "5534d08d-e399-4b15-ac82-d6fd880d8ff0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        380,
+        260
+      ],
+      "id": "c11b890a-0aaf-472c-8c15-c683b9693d80",
+      "name": "SerpAPI",
+      "credentials": {
+        "serpApi": {
+          "id": "CISyCivtWLxr7tl8",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        500,
+        340
+      ],
+      "id": "f7d51067-0c25-4247-9cdd-23ca0ac8cb7d",
+      "name": "Wikipedia"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWolframAlpha",
+      "typeVersion": 1,
+      "position": [
+        680,
+        280
+      ],
+      "id": "ff2783ea-0e1f-4fd4-86f4-649a74f2dfe3",
+      "name": "Wolfram Alpha",
+      "credentials": {
+        "wolframAlphaApi": {
+          "id": "mJy2ghc5qje6dHKr",
+          "name": "WolframAlphaApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        160,
+        260
+      ],
+      "id": "e8d97c17-4dd4-401e-beca-0263030d792d",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "CMU2WIyAs0wnezmL",
+          "name": "OpenRouter account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wolfram Alpha": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aea25b39-48a7-4449-82fe-b68aeed4658b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "05e95af5e3acb951e12f228911c5a5741c04aaa9508a218b9901788c07698fc6"
+  },
+  "id": "iZnnOMXIhF9C1rIv",
+  "tags": []
+}

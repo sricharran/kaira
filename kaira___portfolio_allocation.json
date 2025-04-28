@@ -1,0 +1,306 @@
+{
+  "name": "kaira - portfolio allocation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -620,
+        80
+      ],
+      "id": "8587fa9b-ace1-4897-a62e-2c36c27f0eec",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os",
+          "mode": "list",
+          "cachedResultName": "ascend_holdings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "holdings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1jSQThFY13CN25yefr2TetWt8Q2XezJMVkCVJLjEQ2os/edit#gid=0"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        -400,
+        80
+      ],
+      "id": "933e996f-6979-4a1b-b55c-d1a5cd15106d",
+      "name": "Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aGzdEufRV19wOl3m",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = items.map(i => i.json);\n\n// Step 1: Clean and normalize the data\nconst cleanData = rows.map(row => ({\n  ticker: row[\"Ticker\"],\n  type: row[\"Investment_type\"],\n  sector: row[\"Sector\"],\n  amount: parseFloat(row[\"Total_investment\"])\n}));\n\n// Step 2: Filter out empty or invalid rows\nconst holdings = cleanData.filter(row =>\n  row.ticker && row.type && row.sector && !isNaN(row.amount)\n);\n\n// Step 3: Allocation summary function\nfunction summarizeAllocation(data, key) {\n  const summary = {};\n  let total = 0;\n\n  data.forEach(row => {\n    total += row.amount;\n    if (!summary[row[key]]) summary[row[key]] = 0;\n    summary[row[key]] += row.amount;\n  });\n\n  const result = Object.entries(summary).map(([k, v]) => ({\n    label: k,\n    amount: v,\n    percentage: ((v / total) * 100).toFixed(2) + '%'\n  }));\n\n  return { total, breakdown: result };\n}\n\n// Step 4: Get breakdowns\nconst bySector = summarizeAllocation(holdings, 'sector');\nconst byType = summarizeAllocation(holdings, 'type');\n\n// Final output\nreturn [\n  {\n    json: {\n      sectorAllocation: bySector,\n      typeAllocation: byType\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        80
+      ],
+      "id": "706fc6a3-2d3a-46a4-81f4-79ed6f148a6e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "const sectorData = $json.sectorAllocation.breakdown;\n\nconst chart = {\n  type: 'pie',\n  data: {\n    labels: sectorData.map(s => s.label),\n    datasets: [{\n      data: sectorData.map(s => s.amount),\n      backgroundColor: ['#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f']\n    }]\n  },\n  options: {\n    plugins: {\n      title: {\n        display: true,\n        text: 'Portfolio Allocation by Sector'\n      },\n      legend: {\n        position: 'bottom'\n      }\n    }\n  }\n};\n\nconst chartUrlsector = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chart))}`;\n\nreturn [\n  {\n    json: {\n      chartUrlsector\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "16743f34-d957-4fdc-abe0-45f51f5f1fc6",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const typeData = $json.typeAllocation.breakdown;\n\nconst chart = {\n  type: 'pie',\n  data: {\n    labels: typeData.map(t => t.label),\n    datasets: [{\n      data: typeData.map(t => t.amount),\n      backgroundColor: ['#8cd17d', '#b6992d', '#f1ce63', '#d37295', '#bab0ab']\n    }]\n  },\n  options: {\n    plugins: {\n      title: {\n        display: true,\n        text: 'Portfolio Allocation by Investment Type'\n      },\n      legend: {\n        position: 'bottom'\n      }\n    }\n  }\n};\n\nconst chartUrltype = `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chart))}`;\n\nreturn [\n  {\n    json: {\n      chartUrltype\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "5e9ccb49-6444-4107-bd2f-a6df8d2a5955",
+      "name": "Code2"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        260,
+        80
+      ],
+      "id": "dead1130-83a8-43e9-8a5b-1172f51e5aa7",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "sendTo": "charranraina28@gmail.com",
+        "subject": "📊 Kaira Portfolio Allocation – Diversification Snapshot",
+        "message": "=<!DOCTYPE html>\n<html>\n  <body style=\"font-family: Arial, sans-serif; color: #333; line-height: 1.6;\">\n\n    <p>Hello Investor,</p>\n\n    <p>Here's your latest portfolio allocation overview:</p>\n\n    <p><strong>💼 Total Investment:</strong> ₹{{ $('Code').item.json.sectorAllocation.total }}</p>\n\n    <!-- Allocation Charts: Side by Side -->\n    <div style=\"display: flex; justify-content: space-between; flex-wrap: wrap; gap: 20px; margin-bottom: 30px;\">\n      <div style=\"flex: 1; min-width: 200px;\">\n        <p><strong>📊 Allocation by Sector:</strong></p>\n        <img src=\"{{ $('Merge').item.json.chartUrlsector }}\"\n             alt=\"Sector Allocation Pie Chart\"\n             style=\"max-width: 100%; height: auto;\" />\n      </div>\n      <div style=\"flex: 1; min-width: 200px;\">\n        <p><strong>📊 Allocation by Investment Type:</strong></p>\n        <img src=\"{{ $('Merge').item.json.chartUrltype }}\"\n             alt=\"Type Allocation Pie Chart\"\n             style=\"max-width: 100%; height: auto;\" />\n      </div>\n    </div>\n\n    <!-- AI Insight -->\n    <p><strong>💬 Kaira’s Insight on Your Allocation:</strong></p>\n    <p style=\"font-style: italic;\">{{ $('AI Agent').item.json.output }}</p>\n\n    <p style=\"margin-top: 30px;\">\n      A well-diversified portfolio can reduce risk and improve long-term returns.\n      Keep monitoring your exposure across sectors and types.\n    </p>\n\n    <p>Stay balanced,<br>\n    – <strong>Kaira</strong>, your Portfolio Assistant 💡</p>\n\n  </body>\n</html>\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        80
+      ],
+      "id": "c183bd2a-017e-4a70-b725-5fec45b7d86e",
+      "name": "Gmail",
+      "webhookId": "46beaece-0de2-4376-a011-7cd6b58ff8d1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "UY8czqfsbzv3P8fv",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.8,
+      "position": [
+        680,
+        80
+      ],
+      "id": "7607907f-7a8a-4ad2-a7b4-04508531f91f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwq-32b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        660,
+        280
+      ],
+      "id": "058faa48-0341-4340-86f4-8778de95d4cf",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "CMU2WIyAs0wnezmL",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const sectorBreakdown = $('Code').first().json.sectorAllocation.breakdown;\nconst typeBreakdown = $('Code').first().json.typeAllocation.breakdown;\n\nfunction formatBreakdown(breakdown) {\n  return breakdown\n    .filter(b => b.label && !isNaN(b.amount))\n    .map(b => `${b.label}: ₹${b.amount.toFixed(2)} (${b.percentage})`)\n    .join('\\n');\n}\n\nconst sectorFormatted = formatBreakdown(sectorBreakdown);\nconst typeFormatted = formatBreakdown(typeBreakdown);\n\nreturn {\n  prompt: `\nYou are Kaira, a smart financial assistant.\n\nBased on this portfolio allocation, generate a short 2–3 sentence insight.\n\n📊 Sector Allocation:\n${sectorFormatted}\n\n💼 Investment Type Allocation:\n${typeFormatted}\n\nHighlight strengths, risks, and suggestions for better diversification, but be concise and avoid repeating all the numbers.\n`.trim()\n};\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        80
+      ],
+      "id": "c91ec326-2c0b-4803-ab9b-f6dcb0710e09",
+      "name": "Code3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code3": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "fbf8e63f-8795-4489-b053-7deca5a12f14",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "05e95af5e3acb951e12f228911c5a5741c04aaa9508a218b9901788c07698fc6"
+  },
+  "id": "5BfteqYC5xWD43Zr",
+  "tags": []
+}

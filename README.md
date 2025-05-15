@@ -81,12 +81,6 @@ The n8n workflow implements:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## Contact
-
-For questions or collaboration opportunities:
-- GitHub: [your-github-username](https://github.com/your-github-username)
-- LinkedIn: [your-linkedin-profile](https://linkedin.com/in/your-linkedin-profile)
-
 ---
 
 *Kaira: Your intelligent, proactive AI assistant*
